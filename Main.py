@@ -157,6 +157,7 @@ async def unknown(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Sorry, I didn't understand that. Use /help to see available commands.")
 
 if __name__ == "__main__":
+    print(f"BOT_TOKEN from environment: {BOT_TOKEN}")
     if not BOT_TOKEN:
         print("ERROR: BOT_TOKEN environment variable not set. Exiting.")
         exit(1)
