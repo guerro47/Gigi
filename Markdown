@@ -1,0 +1,36 @@
+# Gigi Borgan Telegram Bot (Render + GitHub)
+This repository contains a Render-ready Telegram bot for **Gigi Borgan**. The bot uses a sensual, professional persona and integrates a simple Gumroad purchase flow.
+
+## Features
+- Branded welcome menu and preview
+- Gumroad checkout link for purchasing content
+- Manual /redeem flow to submit Gumroad receipt for admin verification
+- Simple claims queue (stored in `claims/` for admin processing)
+
+## Quick Deploy (Render + GitHub)
+1. Create a new repository on GitHub and push this project.
+2. On Render, create a **Web Service** (or Background Worker) and connect your GitHub repo.
+3. Set the following Environment Variables on Render:
+   - `BOT_TOKEN` = your Telegram bot token (from @BotFather)
+   - `GUMROAD_URL` = your Gumroad product/checkout link (optional; default included)
+   - `ADMIN_TELEGRAM` = your admin Telegram handle (e.g. @youradmin)
+4. Start command: `python main.py` (Procfile includes worker entry)
+5. Deploy and test your bot in Telegram.
+
+## Notes on Payments and Access
+- **Gumroad** handles payments and delivery of digital files. For an automated verification flow, configure Gumroad webhooks and a small endpoint to accept webhook events and auto-issue access links.
+- The included `/redeem` command saves claims to `claims/` for manual verification. Admins can review and reply to users with access links.
+- For fully automated delivery, use Gumroad webhooks or switch to Stripe + Telegram Payments and handle receipts programmatically.
+
+## Files
+- `main.py` – Bot logic
+- `requirements.txt` – Python deps
+- `Procfile` – Render start file
+- `runtime.txt` – Python runtime
+- `README.md` – This file
+
+## Support
+If you want, I can:
+- Add Gumroad webhook handling (requires a public HTTPS endpoint)
+- Add automated access unlocking on successful payment
+- Integrate with your website to issue unique access tokens/links
