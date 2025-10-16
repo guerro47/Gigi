@@ -1,1 +1,1 @@
-[cite_start]worker: python main.py [cite: 1]
+[cite_start]worker: python Main.py [cite: 1]
