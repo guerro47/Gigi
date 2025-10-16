@@ -2,6 +2,7 @@ import os
 import openai
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, ContextTypes, MessageHandler, filters
+from telegram.helpers import escape_markdown
 from sqlalchemy import create_engine, Column, Integer, String, Text
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
@@ -56,13 +57,14 @@ PURCHASE_PROMPT = (
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     prompt = "Create a sensual, professional, and brief welcome message for a Telegram bot named Gigi Borgan that sells exclusive, intimate content. The message should be welcoming and mysterious, inviting users to explore the bot's offerings. Use markdown for emphasis."
     welcome_message = await generate_text(prompt)
+    escaped_welcome_message = escape_markdown(welcome_message, version=2)
     keyboard = [
         [InlineKeyboardButton("👀 View Preview", callback_data="preview")],
         [InlineKeyboardButton("💳 Buy Access", callback_data="buy")],
         [InlineKeyboardButton("📩 Redeem Purchase", callback_data="redeem")],
         [InlineKeyboardButton("📞 Contact Support", url=f"https://t.me/{ADMIN_TELEGRAM.lstrip('@')}")]
     ]
-    await update.message.reply_markdown_v2(welcome_message, reply_markup=InlineKeyboardMarkup(keyboard))
+    await update.message.reply_markdown_v2(escaped_welcome_message, reply_markup=InlineKeyboardMarkup(keyboard))
 
 async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
@@ -70,11 +72,12 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if query.data == "preview":
         prompt = "Create a short, alluring caption for a preview image from an exclusive photo set. The caption should be mysterious and enticing, encouraging users to purchase the full set. Use markdown for emphasis."
         preview_caption = await generate_text(prompt)
+        escaped_preview_caption = escape_markdown(preview_caption, version=2)
         # Replace sample.jpg with your hosted preview image
         await query.message.reply_photo(
             photo="https://via.placeholder.com/800x800.png?text=Gigi+Borgan+Preview",
-            caption=preview_caption,
-            parse_mode="Markdown"
+            caption=escaped_preview_caption,
+            parse_mode="MarkdownV2"
         )
     elif query.data == "buy":
         await query.message.reply_text(PURCHASE_PROMPT)
@@ -137,15 +140,17 @@ async def view_claims_command(update: Update, context: ContextTypes.DEFAULT_TYPE
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     prompt = "Create a helpful and friendly message for a Telegram bot that lists the available commands. The commands are: /start, /preview, /buy, and /redeem. Briefly explain what each command does."
     help_text = await generate_text(prompt)
-    await update.message.reply_text(help_text)
+    escaped_help_text = escape_markdown(help_text, version=2)
+    await update.message.reply_text(escaped_help_text, parse_mode="MarkdownV2")
 
 async def preview_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     prompt = "Create a short, alluring caption for a preview image from an exclusive photo set. The caption should be mysterious and enticing, encouraging users to purchase the full set. Use markdown for emphasis."
     preview_caption = await generate_text(prompt)
+    escaped_preview_caption = escape_markdown(preview_caption, version=2)
     await update.message.reply_photo(
         photo="https://via.placeholder.com/800x800.png?text=Gigi+Borgan+Preview",
-        caption=preview_caption,
-        parse_mode="Markdown"
+        caption=escaped_preview_caption,
+        parse_mode="MarkdownV2"
     )
 
 async def unknown(update: Update, context: ContextTypes.DEFAULT_TYPE):
