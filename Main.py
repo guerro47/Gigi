@@ -48,6 +48,31 @@ async def generate_text(prompt):
         return "Sorry, I'm having trouble thinking right now."
 
 
+async def generate_chat_response(user_message):
+    if not client:
+        return "OpenAI API key not configured."
+    try:
+        system_prompt = "You are Gigi Borgan, a seductive and mysterious AI. Your goal is to be alluring and engaging, making the user want to continue the conversation. Keep your responses brief and teasing."
+        response = await client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_message},
+            ],
+        )
+        return response.choices[0].message.content.strip()
+    except Exception as e:
+        print(f"Error generating text: {e}")
+        return "Sorry, I'm having trouble thinking right now."
+
+
+async def chat_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handles direct text messages for conversational chat."""
+    user_message = update.message.text
+    ai_response = await generate_chat_response(user_message)
+    await update.message.reply_text(ai_response)
+
+
 PURCHASE_PROMPT = (
     "Your pleasure awaits. Complete your purchase securely through Gumroad:\n\n"
     f"{GUMROAD_URL}\n\n"
@@ -61,6 +86,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     escaped_welcome_message = escape_markdown(welcome_message, version=2)
     keyboard = [
         [InlineKeyboardButton("👀 View Preview", callback_data="preview")],
+        [InlineKeyboardButton("💬 Chat with Gigi", callback_data="chat")],
         [InlineKeyboardButton("💳 Buy Access", callback_data="buy")],
         [InlineKeyboardButton("📩 Redeem Purchase", callback_data="redeem")],
         [InlineKeyboardButton("📞 Contact Support", url=f"https://t.me/{ADMIN_TELEGRAM.lstrip('@')}")]
@@ -80,6 +106,8 @@ photo="https://placehold.co/800x800.png?text=Gigi+Borgan+Preview",
             caption=escaped_preview_caption,
             parse_mode="MarkdownV2"
         )
+    elif query.data == "chat":
+        await query.message.reply_text("I'm listening... Tell me anything.")
     elif query.data == "buy":
         await query.message.reply_text(PURCHASE_PROMPT)
     elif query.data == "redeem":
@@ -176,6 +204,7 @@ if __name__ == "__main__":
     app.add_handler(CommandHandler("help", help_command))
     app.add_handler(CommandHandler("preview", preview_cmd))
     app.add_handler(CommandHandler("view_claims", view_claims_command))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, chat_handler))
     app.add_handler(MessageHandler(filters.COMMAND, unknown))
 
     print("🚀 Gigi Borgan Bot (Gumroad flow) is running…")
