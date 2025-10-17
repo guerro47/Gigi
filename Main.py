@@ -56,7 +56,7 @@ PURCHASE_PROMPT = (
 )
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    prompt = "Create a sensual, professional, and brief welcome message for a Telegram bot named Gigi Borgan that sells exclusive, intimate content. The message should be welcoming and mysterious, inviting users to explore the bot's offerings. Use markdown for emphasis."
+    prompt = "Craft a deeply seductive and mysterious welcome message for a Telegram bot named Gigi Borgan. The bot offers exclusive, intimate content. The tone should be alluring, personal, and slightly teasing, making the user feel a special connection and a strong desire to see what's hidden. Use markdown for emphasis. Address the user directly."
     welcome_message = await generate_text(prompt)
     escaped_welcome_message = escape_markdown(welcome_message, version=2)
     keyboard = [
