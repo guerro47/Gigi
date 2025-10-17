@@ -76,7 +76,7 @@ async def menu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         escaped_preview_caption = escape_markdown(preview_caption, version=2)
         # Replace sample.jpg with your hosted preview image
         await query.message.reply_photo(
-            photo="https://via.placeholder.com/800x800.png?text=Gigi+Borgan+Preview",
+photo="https://placehold.co/800x800.png?text=Gigi+Borgan+Preview",
             caption=escaped_preview_caption,
             parse_mode="MarkdownV2"
         )
@@ -149,7 +149,7 @@ async def preview_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     preview_caption = await generate_text(prompt)
     escaped_preview_caption = escape_markdown(preview_caption, version=2)
     await update.message.reply_photo(
-        photo="https://via.placeholder.com/800x800.png?text=Gigi+Borgan+Preview",
+        photo="https://placehold.co/800x800.png?text=Gigi+Borgan+Preview",
         caption=escaped_preview_caption,
         parse_mode="MarkdownV2"
     )
