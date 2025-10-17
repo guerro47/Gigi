@@ -1,4 +1,8 @@
 import os
+import asyncio
+from fastapi import FastAPI
+from fastapi.responses import HTMLResponse
+import uvicorn
 from openai import AsyncOpenAI
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, ContextTypes, MessageHandler, filters
@@ -12,6 +16,53 @@ GUMROAD_URL = os.getenv("GUMROAD_URL", "https://gigi.gumroad.com/l/exclusive-set
 ADMIN_TELEGRAM = os.getenv("ADMIN_TELEGRAM", "@youradminhandle")
 DATABASE_URL = os.getenv("DATABASE_URL")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+
+# FastAPI Web App
+app_web = FastAPI()
+
+@app_web.get("/settings", response_class=HTMLResponse)
+async def get_settings():
+    # Safely read environment variables, indicating only if they are set.
+    settings = {
+        "GUMROAD_URL": "Set" if GUMROAD_URL else "Not Set",
+        "ADMIN_TELEGRAM": "Set" if ADMIN_TELEGRAM else "Not Set",
+        "DATABASE_URL": "Set" if DATABASE_URL else "Not Set",
+        "BOT_TOKEN": "Set" if BOT_TOKEN else "Not Set",
+        "OPENAI_API_KEY": "Set" if OPENAI_API_KEY else "Not Set",
+    }
+    
+    # Generate HTML to display the settings
+    html_content = """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Medusa Telebot Settings</title>
+        <style>
+            body { font-family: sans-serif; margin: 2em; background-color: #f4f4f9; color: #333; }
+            h1 { color: #5a4a78; }
+            table { border-collapse: collapse; width: 100%; max-width: 600px; margin-top: 1em; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background-color: #5a4a78; color: white; }
+            .set { color: green; font-weight: bold; }
+            .not-set { color: red; font-weight: bold; }
+        </style>
+    </head>
+    <body>
+        <h1>Medusa Telebot Settings</h1>
+        <table>
+            <tr><th>Variable</th><th>Status</th></tr>
+    """
+    for key, value in settings.items():
+        status_class = "set" if value == "Set" else "not-set"
+        html_content += f"<tr><td>{key}</td><td class='{status_class}'>{value}</td></tr>"
+    
+    html_content += """
+        </table>
+    </body>
+    </html>
+    """
+    return HTMLResponse(content=html_content)
+
 
 client = None
 if OPENAI_API_KEY:
@@ -185,8 +236,41 @@ async def preview_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def unknown(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Sorry, I didn't understand that. Use /help to see available commands.")
 
+async def main() -> None:
+    """Run the bot and web server concurrently."""
+    # --- Initialize Telegram Bot ---
+    app_bot = ApplicationBuilder().token(BOT_TOKEN).build()
+    app_bot.add_handler(CommandHandler("start", start))
+    app_bot.add_handler(CallbackQueryHandler(menu_handler))
+    app_bot.add_handler(CommandHandler("redeem", redeem_command))
+    app_bot.add_handler(CommandHandler("help", help_command))
+    app_bot.add_handler(CommandHandler("preview", preview_cmd))
+    app_bot.add_handler(CommandHandler("view_claims", view_claims_command))
+    app_bot.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, chat_handler))
+    app_bot.add_handler(MessageHandler(filters.COMMAND, unknown))
+
+    # --- Initialize Web Server ---
+    # Render provides the PORT environment variable
+    port = int(os.environ.get("PORT", 8080))
+    config = uvicorn.Config(app_web, host="0.0.0.0", port=port)
+    server = uvicorn.Server(config)
+
+    # --- Run both concurrently ---
+    async with app_bot:
+        print("🚀 Starting Telegram Bot...")
+        await app_bot.initialize()
+        await app_bot.updater.start_polling()
+        await app_bot.start()
+        
+        print(f"🚀 Starting Web Server on port {port}...")
+        await server.serve()
+        
+        await app_bot.updater.stop()
+        await app_bot.stop()
+
 if __name__ == "__main__":
-    print(f"BOT_TOKEN from environment: {BOT_TOKEN}")
+    # --- Pre-run checks ---
+    print(f"BOT_TOKEN from environment: {'Set' if BOT_TOKEN else 'Not Set'}")
     if not BOT_TOKEN:
         print("ERROR: BOT_TOKEN environment variable not set. Exiting.")
         exit(1)
@@ -197,15 +281,4 @@ if __name__ == "__main__":
     if not OPENAI_API_KEY:
         print("WARNING: OPENAI_API_KEY environment variable not set. Personality features will be disabled.")
 
-    app = ApplicationBuilder().token(BOT_TOKEN).build()
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CallbackQueryHandler(menu_handler))
-    app.add_handler(CommandHandler("redeem", redeem_command))
-    app.add_handler(CommandHandler("help", help_command))
-    app.add_handler(CommandHandler("preview", preview_cmd))
-    app.add_handler(CommandHandler("view_claims", view_claims_command))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, chat_handler))
-    app.add_handler(MessageHandler(filters.COMMAND, unknown))
-
-    print("🚀 Gigi Borgan Bot (Gumroad flow) is running…")
-    app.run_polling()
+    asyncio.run(main())
