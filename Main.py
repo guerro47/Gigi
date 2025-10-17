@@ -1,5 +1,5 @@
 import os
-import openai
+from openai import AsyncOpenAI
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, ContextTypes, MessageHandler, filters
 from telegram.helpers import escape_markdown
@@ -13,8 +13,9 @@ ADMIN_TELEGRAM = os.getenv("ADMIN_TELEGRAM", "@youradminhandle")
 DATABASE_URL = os.getenv("DATABASE_URL")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
+client = None
 if OPENAI_API_KEY:
-    openai.api_key = OPENAI_API_KEY
+    client = AsyncOpenAI(api_key=OPENAI_API_KEY)
 
 # Database setup
 Base = declarative_base()
@@ -34,10 +35,10 @@ if DATABASE_URL:
     db_session = Session()
 
 async def generate_text(prompt):
-    if not OPENAI_API_KEY:
+    if not client:
         return "OpenAI API key not configured."
     try:
-        response = await openai.ChatCompletion.acreate(
+        response = await client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[{"role": "user", "content": prompt}]
         )
