@@ -5,7 +5,7 @@ from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandle
 from telegram.helpers import escape_markdown
 from sqlalchemy import create_engine, Column, Integer, String, Text
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 GUMROAD_URL = os.getenv("GUMROAD_URL", "https://gigi.gumroad.com/l/exclusive-set01")
